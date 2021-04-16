@@ -1,0 +1,17 @@
+{
+  "name": "spatial-grid",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node src/utils/testRunner.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "async": "^3.2.0",
+    "console-table-printer": "^2.8.2",
+    "diff": "^5.0.0"
+  }
+}
