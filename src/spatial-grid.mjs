@@ -11,22 +11,26 @@
  * @returns @object a grid object with initialized but empty cells
  */
 const create = ({ xMin, xMax, yMin, yMax }, { width, height }) => ({
-  bounds: {
+  bounds: Object.freeze({
     xMin,
     xMax,
     yMin,
     yMax,
     height: yMax - yMin,
     width: xMax - xMin,
-  },
-  dimensions: { width, height },
-  cells: Array(width)
-    .fill(null)
-    .map(() =>
-      Array(height)
-        .fill(null)
-        .map(() => new Set())
-    ),
+  }),
+  dimensions: Object.freeze({ width, height }),
+  cells: Object.freeze(
+    Array(width)
+      .fill(null)
+      .map(() =>
+        Object.freeze(
+          Array(height)
+            .fill(null)
+            .map(() => new Set())
+        )
+      )
+  ),
   entities: {}, // an object was tested to be faster than a Map. Object.create(null) has no difference
 });
 
@@ -308,8 +312,11 @@ const stringify = (grid) =>
 const parse = (stringifiedGrid) => {
   const grid = JSON.parse(stringifiedGrid);
   grid.cells.forEach((_, idx) => {
-    grid.cells[idx] = grid.cells[idx].map((y) => new Set(y));
+    grid.cells[idx] = Object.freeze(grid.cells[idx].map((y) => new Set(y)));
   });
+  Object.freeze(grid.cells);
+  Object.freeze(grid.dimensions);
+  Object.freeze(grid.position);
   return grid;
 };
 
