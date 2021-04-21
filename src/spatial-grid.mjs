@@ -10,29 +10,31 @@
  * @param dimensions Must contain width and height. Used to determine the amount of cells in x and y axis respectively
  * @returns @object a grid object with initialized but empty cells
  */
-const create = ({ xMin, xMax, yMin, yMax }, { width, height }) => ({
-  bounds: Object.freeze({
-    xMin,
-    xMax,
-    yMin,
-    yMax,
-    height: yMax - yMin,
-    width: xMax - xMin,
-  }),
-  dimensions: Object.freeze({ width, height }),
-  cells: Object.freeze(
-    Array(width)
-      .fill(null)
-      .map(() =>
-        Object.freeze(
-          Array(height)
-            .fill(null)
-            .map(() => new Set())
-        )
-      )
-  ),
-  entities: {}, // an object was tested to be faster than a Map. Object.create(null) has no difference
-});
+const create = ({ xMin, xMax, yMin, yMax }, { width, height }) => {
+  // new Array(x).fill does holey array https://v8.dev/blog/elements-kinds
+  // not sure if it makes a difference
+  const x = [];
+  for (let w = 0; w < width; w++) {
+    const y = [];
+    for (let h = 0; h < height; h++) {
+      y.push(new Set());
+    }
+    x.push(y);
+  }
+  return {
+    bounds: Object.freeze({
+      xMin,
+      xMax,
+      yMin,
+      yMax,
+      height: yMax - yMin,
+      width: xMax - xMin,
+    }),
+    dimensions: Object.freeze({ width, height }),
+    cells: x,
+    entities: [],
+  };
+};
 
 /**
  * Clamp between 0.0 and a little bit < 1.0.
