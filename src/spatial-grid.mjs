@@ -71,9 +71,9 @@ const getCellIndices = (grid, { position, dimensions }) => {
  * @param indicesRange {xMin, yMin, xMax, yMax}
  * @param fn Side effecting function. Takes the cells x and y indices
  */
-const forEachIndex = (indicesRange, fn) => {
-  for (let x = indicesRange.xMin; x <= indicesRange.xMax; x++) {
-    for (let y = indicesRange.yMin; y <= indicesRange.yMax; y++) {
+const forEachIndex = ({ xMin, yMin, xMax, yMax }, fn) => {
+  for (let x = xMin; x <= xMax; x++) {
+    for (let y = yMin; y <= yMax; y++) {
       fn(x, y);
     }
   }
@@ -92,6 +92,13 @@ const createSpawnEntity = () => {
   });
 };
 
+const addToIndex = (grid, entity) => (x, y) => {
+  grid.cells[x][y].add(entity.id);
+};
+const removeFromIndex = (grid, entity) => (x, y) => {
+  grid.cells[x][y].delete(entity.id);
+};
+
 /**
  * Add entity id to "cells" based on its size and position relative to the grid.
  * Also add a mapping of the entities id and indice range to "entities".
@@ -102,10 +109,8 @@ const createSpawnEntity = () => {
  */
 const addEntity = (grid, entity) => {
   const indices = getCellIndices(grid, entity);
-  const addToIndex = (x, y) => grid.cells[x][y].add(entity.id);
-  forEachIndex(indices, addToIndex);
+  forEachIndex(indices, addToIndex(grid, entity));
   grid.entities[entity.id] = indices;
-  return grid;
 };
 
 /**
@@ -117,12 +122,10 @@ const addEntity = (grid, entity) => {
  */
 const removeEntity = (grid, entity) => {
   const indices = grid.entities[entity.id];
-  const removeFromIndex = (x, y) => grid.cells[x][y].delete(entity.id);
-  forEachIndex(indices, removeFromIndex);
+  forEachIndex(indices, removeFromIndex(grid, entity));
   //delete grid.entities[entity.id];
   // setting to undefined is enough and way faster
   grid.entities[entity.id] = undefined;
-  return grid;
 };
 
 /**
@@ -132,14 +135,11 @@ const removeEntity = (grid, entity) => {
  * @param b
  * @returns
  */
-const equalIndices = (a, b) => {
-  return (
-    a.xMin === b.xMin &&
-    a.xMax === b.xMax &&
-    a.yMin === b.yMin &&
-    a.yMax === b.yMax
-  );
-};
+const equalIndices = (a, b) =>
+  a.xMin === b.xMin &&
+  a.xMax === b.xMax &&
+  a.yMin === b.yMin &&
+  a.yMax === b.yMax;
 
 /**
  * Takes an entity with an updated position and changes it's location in the grid,
@@ -152,21 +152,130 @@ const equalIndices = (a, b) => {
 const updateEntity = (grid, entity) => {
   const previousIndices = grid.entities[entity.id];
   const currentIndices = getCellIndices(grid, entity);
+  // short circuit if not enough movement. ~10% faster for benchmark even with counting diffs
   if (equalIndices(previousIndices, currentIndices)) {
-    return grid;
+    return;
   }
 
-  const addToIndex = (x, y) => grid.cells[x][y].add(entity.id);
-  const removeFromIndex = (x, y) => grid.cells[x][y].delete(entity.id);
+  // do the difference of new and old positions to minize additions and removals ~10-20% faster for benchmark
+  const {
+    xMin: xMinPrev,
+    xMax: xMaxPrev,
+    yMin: yMinPrev,
+    yMax: yMaxPrev,
+  } = previousIndices;
+  const {
+    xMin: xMinCurr,
+    xMax: xMaxCurr,
+    yMin: yMinCurr,
+    yMax: yMaxCurr,
+  } = currentIndices;
+  const remove = removeFromIndex(grid, entity);
+  const add = addToIndex(grid, entity);
 
-  forEachIndex(previousIndices, removeFromIndex);
-  forEachIndex(currentIndices, addToIndex);
-  grid.entities[entity.id] = currentIndices;
-  return grid;
+  // left righter
+  if (xMinCurr > xMinPrev) {
+    forEachIndex(
+      {
+        xMin: xMinPrev,
+        xMax: xMinCurr,
+        yMin: yMinPrev,
+        yMax: yMaxPrev,
+      },
+      remove
+    );
+  }
+  // left lefter
+  else if (xMinCurr < xMinPrev) {
+    forEachIndex(
+      {
+        xMin: xMinCurr,
+        xMax: xMinPrev,
+        yMin: yMinCurr,
+        yMax: yMaxCurr,
+      },
+      add
+    );
+  }
+
+  // right righter
+  if (xMaxCurr > xMaxPrev) {
+    forEachIndex(
+      {
+        xMin: xMaxPrev,
+        xMax: xMaxCurr,
+        yMin: yMinCurr,
+        yMax: yMaxCurr,
+      },
+      add
+    );
+  }
+  // right lefter
+  else if (xMaxCurr < xMaxPrev) {
+    forEachIndex(
+      {
+        xMin: xMaxCurr,
+        xMax: xMaxPrev,
+        yMin: yMinPrev,
+        yMax: yMaxPrev,
+      },
+      remove
+    );
+  }
+
+  // bottom higher
+  if (yMinCurr > yMinPrev) {
+    forEachIndex(
+      {
+        xMin: xMinPrev,
+        xMax: xMaxPrev,
+        yMin: yMinPrev,
+        yMax: yMinCurr,
+      },
+      remove
+    );
+  }
+  // bottom lower
+  else if (yMinCurr < yMinPrev) {
+    forEachIndex(
+      {
+        xMin: xMinCurr,
+        xMax: xMaxCurr,
+        yMin: yMinCurr,
+        yMax: yMinPrev,
+      },
+      add
+    );
+  }
+
+  // top higher
+  if (yMaxCurr > yMaxPrev) {
+    forEachIndex(
+      {
+        xMin: xMinCurr,
+        xMax: xMaxCurr,
+        yMin: yMaxPrev,
+        yMax: yMaxCurr,
+      },
+      add
+    );
+  }
+  // top lower
+  else if (yMaxCurr < yMaxPrev) {
+    forEachIndex(
+      {
+        xMin: xMinPrev,
+        xMax: xMaxPrev,
+        yMin: yMaxCurr,
+        yMax: yMaxPrev,
+      },
+      remove
+    );
+  }
 };
 
 /**
- * Return a set of entities in the grid tha t are inside an area with given position and dimensions.
+ * Return a set of entities in the grid that are inside an area with given position and dimensions.
  *
  * @param grid
  * @param position
@@ -176,9 +285,9 @@ const updateEntity = (grid, entity) => {
 const findNearby = (grid, position, dimensions) => {
   const indices = getCellIndices(grid, { position, dimensions });
   const nearby = new Set();
-  const addToNearby = (entity) => nearby.add(entity);
-  const addCellEntitiesToNearby = (x, y) =>
-    grid.cells[x][y].forEach(addToNearby);
+  const addCellEntitiesToNearby = (x, y) => {
+    grid.cells[x][y].forEach(nearby.add, nearby);
+  };
   forEachIndex(indices, addCellEntitiesToNearby);
   return nearby;
 };

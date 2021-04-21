@@ -61,23 +61,26 @@ tester.snapshot(
   SpatialGrid.getCellIndices(grid, entity4)
 );
 
+SpatialGrid.addEntity(grid, entity4);
 tester.snapshot(
   "The grid should have an entity id in 2,2 cell and an entry in the entity map with its indices",
-  SpatialGrid.addEntity(grid, entity4)
+  grid
 );
 
 const entity5 = spawnEntity({
   position: { x: 10, y: 10 },
   dimensions: { width: 5, height: 5 },
 });
+SpatialGrid.addEntity(grid, entity5);
 tester.snapshot(
   "The grid should have a new entity id in 3,3 cell and an entry in the entity map with its indices",
-  SpatialGrid.addEntity(grid, entity5)
+  grid
 );
 
+SpatialGrid.removeEntity(grid, entity5);
 tester.snapshot(
   "The grid should no longer have the deleted entity in its entities map or cells",
-  SpatialGrid.removeEntity(grid, entity5)
+  grid
 );
 
 const aIndices = { xMin: 1, xMax: 2, yMin: 3, yMax: 4 };
@@ -97,17 +100,13 @@ tester.snapshot(
 
 entity4.position.x = entity4.position.x + 0.1;
 
-tester.snapshot(
-  "Moving slightly should not change the grid",
-  SpatialGrid.updateEntity(grid, entity4)
-);
+SpatialGrid.updateEntity(grid, entity4);
+tester.snapshot("Moving slightly should not change the grid", grid);
 
 entity4.position.x = entity4.position.x + 15;
 
-tester.snapshot(
-  "Moving enough should change the grid",
-  SpatialGrid.updateEntity(grid, entity4)
-);
+SpatialGrid.updateEntity(grid, entity4);
+tester.snapshot("Moving enough should change the grid", grid);
 
 tester.snapshot(
   "There are no nearby entities in the middle",

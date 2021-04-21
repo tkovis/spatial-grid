@@ -9,7 +9,9 @@ import async from "async";
 const testFolder = "src/tests/";
 
 const files = fs.readdirSync(testFolder);
-const funcs = files.map((file) => exec.bind(null, `node ${testFolder}${file}`));
+const funcs = files.map((file) =>
+  exec.bind(null, `node --trace-uncaught ${testFolder}${file}`)
+);
 
 const getResults = (err, data) => {
   if (err) {

@@ -232,3 +232,54 @@ console.table([
       "µs / client",
   },
 ]);
+console.log("---------BEST--------------");
+console.table([
+  {
+    add:
+      Math.round(Math.min(...results.map(({ add }) => add))) +
+      "ms / " +
+      clients +
+      " clients",
+    find:
+      Math.round(Math.min(...results.map(({ find }) => find))) +
+      "ms / " +
+      finds +
+      " iterations",
+    update:
+      Math.round(Math.min(...results.map(({ update }) => update))) +
+      "ms / " +
+      clients +
+      " clients",
+    remove:
+      Math.round(Math.min(...results.map(({ remove }) => remove))) +
+      "ms / " +
+      clients +
+      " clients",
+  },
+  {
+    add:
+      Math.round(
+        (Math.min(...results.map(({ add }) => add)) / clients) * 1000 * 10
+      ) /
+        10 +
+      "µs / client",
+    find:
+      Math.round(
+        (Math.min(...results.map(({ find }) => find)) / finds) * 1000 * 10
+      ) /
+        10 +
+      "µs / iteration",
+    update:
+      Math.round(
+        (Math.min(...results.map(({ update }) => update)) / clients) * 1000 * 10
+      ) /
+        10 +
+      "µs / client",
+    remove:
+      Math.round(
+        (Math.min(...results.map(({ remove }) => remove)) / clients) * 1000 * 10
+      ) /
+        10 +
+      "µs / client",
+  },
+]);
