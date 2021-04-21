@@ -27,7 +27,7 @@ const create = ({ xMin, xMax, yMin, yMax }, { width, height }) => ({
         .fill(null)
         .map(() => new Set())
     ),
-  entities: {},
+  entities: {}, // an object was tested to be faster than a Map. Object.create(null) has no difference
 });
 
 /**
@@ -123,9 +123,7 @@ const addEntity = (grid, entity) => {
 const removeEntity = (grid, entity) => {
   const indices = grid.entities[entity.id];
   forEachIndex(indices, removeFromIndex(grid, entity));
-  //delete grid.entities[entity.id];
-  // setting to undefined is enough and way faster
-  grid.entities[entity.id] = undefined;
+  delete grid.entities[entity.id];
 };
 
 /**
