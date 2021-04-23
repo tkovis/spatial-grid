@@ -64,10 +64,10 @@ const getCellIndices = (grid, { position, dimensions }) => {
   const maxRatioX = sat(maxRelativeX / grid.bounds.width);
   const maxRatioY = sat(maxRelativeY / grid.bounds.height);
   return {
-    xMin: Math.floor(minRatioX * grid.dimensions.width),
-    yMin: Math.floor(minRatioY * grid.dimensions.height),
-    xMax: Math.floor(maxRatioX * grid.dimensions.width),
-    yMax: Math.floor(maxRatioY * grid.dimensions.height),
+    xMin: (minRatioX * grid.dimensions.width) | 0, // (x) | 0 is the same as Math.floor(x) but marginally faster
+    yMin: (minRatioY * grid.dimensions.height) | 0,
+    xMax: (maxRatioX * grid.dimensions.width) | 0,
+    yMax: (maxRatioY * grid.dimensions.height) | 0,
   };
 };
 
